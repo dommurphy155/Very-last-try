@@ -1,4 +1,4 @@
- import logging
+import logging
 import httpx
 
 logger = logging.getLogger("oanda_client")
