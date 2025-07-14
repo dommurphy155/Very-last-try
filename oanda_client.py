@@ -31,15 +31,9 @@ class OandaClient:
         try:
             response = await self.client.post(url, json=order_data)
             if response.status_code == 201:
-                data = response.json()
-                logger.info(f"Trade created successfully: {data}")
-                return True, data
-            else:
-                error = response.json()
-                logger.error(f"Failed to create trade: {error}")
-                return False, error
+                return True, response.json()
+            return False, response.json()
         except Exception as e:
-            logger.error(f"Exception while creating trade: {e}")
             return False, str(e)
 
     async def close_trade(self, trade_id: str) -> tuple[bool, dict | str]:
@@ -47,15 +41,9 @@ class OandaClient:
         try:
             response = await self.client.put(url)
             if response.status_code == 200:
-                data = response.json()
-                logger.info(f"Trade closed successfully: {data}")
-                return True, data
-            else:
-                error = response.json()
-                logger.error(f"Failed to close trade: {error}")
-                return False, error
+                return True, response.json()
+            return False, response.json()
         except Exception as e:
-            logger.error(f"Exception while closing trade: {e}")
             return False, str(e)
 
     async def get_price(self, instrument: str) -> Optional[float]:
@@ -64,56 +52,41 @@ class OandaClient:
         try:
             response = await self.client.get(url, params=params)
             if response.status_code == 200:
-                data = response.json()
-                prices = data.get("prices")
-                if prices and len(prices) > 0:
+                prices = response.json().get("prices")
+                if prices:
                     bid = float(prices[0]["bids"][0]["price"])
                     ask = float(prices[0]["asks"][0]["price"])
-                    mid_price = (bid + ask) / 2
-                    return mid_price
-            logger.error(f"Failed to fetch price for {instrument}: {response.text}")
-            return None
+                    return (bid + ask) / 2
         except Exception as e:
-            logger.error(f"Exception while fetching price: {e}")
-            return None
+            logger.error(f"Exception getting price: {e}")
+        return None
 
     async def get_account_balance(self) -> Optional[float]:
         url = f"{self.base_url}/accounts/{self.account_id}/summary"
         try:
             response = await self.client.get(url)
             if response.status_code == 200:
-                data = response.json()
-                balance = float(data["account"]["balance"])
-                return balance
-            logger.error(f"Failed to fetch account balance: {response.text}")
-            return None
+                return float(response.json()["account"]["balance"])
         except Exception as e:
-            logger.error(f"Exception while fetching account balance: {e}")
-            return None
+            logger.error(f"Exception fetching balance: {e}")
+        return None
 
     async def get_margin_available(self) -> Optional[float]:
         url = f"{self.base_url}/accounts/{self.account_id}/summary"
         try:
             response = await self.client.get(url)
             if response.status_code == 200:
-                data = response.json()
-                margin_available = float(data["account"].get("marginAvailable", 0))
-                return margin_available
-            logger.error(f"Failed to fetch margin available: {response.text}")
-            return None
+                return float(response.json()["account"].get("marginAvailable", 0))
         except Exception as e:
-            logger.error(f"Exception while fetching margin available: {e}")
-            return None
+            logger.error(f"Exception fetching margin: {e}")
+        return None
 
     async def get_open_trades(self) -> list[dict]:
         url = f"{self.base_url}/accounts/{self.account_id}/openTrades"
         try:
             response = await self.client.get(url)
             if response.status_code == 200:
-                data = response.json()
-                return data.get("trades", [])
-            logger.error(f"Failed to fetch open trades: {response.text}")
-            return []
+                return response.json().get("trades", [])
         except Exception as e:
-            logger.error(f"Exception while fetching open trades: {e}")
-            return []
+            logger.error(f"Exception fetching trades: {e}")
+        return []

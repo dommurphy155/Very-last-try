@@ -32,7 +32,6 @@ class PositionSizer:
                 with open(STATE_FILE, "r") as f:
                     data = json.load(f)
                     self.trade_state.update(data)
-                    # parse ISO datetime strings
                     for inst, t_str in self.trade_state["last_trade_time"].items():
                         self.trade_state["last_trade_time"][inst] = datetime.fromisoformat(t_str)
                 logger.info("Trade state loaded")
@@ -98,15 +97,12 @@ class PositionSizer:
             logger.info(f"Confidence {confidence:.2f} below threshold {self.min_confidence}, skipping trade")
             return 0
 
-        # Risk % scales with confidence, capped between min_risk and max_risk
         raw_risk = self.min_risk + (self.max_risk - self.min_risk) * confidence
         adjusted_risk = min(max(raw_risk, self.min_risk), self.max_risk)
 
-        # Adjust stop loss based on confidence (volatility buffer)
         volatility_adjustment = 1.5 if confidence < 0.6 else 1.0
         adjusted_stop_loss = stop_loss_pips * volatility_adjustment
 
-        # Determine pip value based on pair type (rough approximation)
         if instrument.endswith("JPY"):
             pip_value = 0.01
         else:
@@ -114,19 +110,19 @@ class PositionSizer:
 
         risk_amount = balance * adjusted_risk
 
-        # Calculate maximum units possible with available margin (prevent margin errors)
         margin_available = await self.oanda_client.get_margin_available()
         if margin_available is None:
             logger.error("No margin info available, skipping trade")
             return 0
 
-        # Calculate units by risk and stop loss
         units_by_risk = int(risk_amount / (adjusted_stop_loss * pip_value))
 
-        # Calculate max units affordable by margin (assuming leverage 1:1 here, adjust if needed)
-        max_units_margin = int(margin_available / self.oanda_client.get_price(instrument))
+        price = await self.oanda_client.get_price(instrument)
+        if price is None:
+            logger.error(f"Price for {instrument} unavailable, skipping trade")
+            return 0
+        max_units_margin = int(margin_available / price)
 
-        # Choose the smaller of the two to avoid margin error
         units = min(units_by_risk, max_units_margin)
 
         if units < 1:

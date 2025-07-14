@@ -6,5 +6,4 @@ CURRENCY_PAIRS = [
 ]
 
 def choose_best_instrument():
-    # Placeholder logic: random selection (upgrade with real analysis later)
     return random.choice(CURRENCY_PAIRS)
