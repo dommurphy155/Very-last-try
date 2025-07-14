@@ -17,10 +17,6 @@ class OandaClient:
         self.client = httpx.AsyncClient(headers=self.headers)
 
     async def create_trade(self, instrument: str, units: int):
-        """
-        Places a market order for the specified instrument and units.
-        Returns (success: bool, response: dict or str)
-        """
         url = f"{self.base_url}/accounts/{self.account_id}/orders"
         order_data = {
             "order": {
@@ -46,10 +42,6 @@ class OandaClient:
             return False, str(e)
 
     async def close_trade(self, trade_id: str):
-        """
-        Closes an open trade by trade_id.
-        Returns (success: bool, response: dict or str)
-        """
         url = f"{self.base_url}/accounts/{self.account_id}/trades/{trade_id}/close"
         try:
             response = await self.client.put(url)
@@ -66,10 +58,6 @@ class OandaClient:
             return False, str(e)
 
     async def get_price(self, instrument: str):
-        """
-        Fetches the latest price for the instrument.
-        Returns float price or None.
-        """
         url = f"{self.base_url}/instruments/{instrument}/pricing"
         params = {"instruments": instrument}
         try:
@@ -89,10 +77,6 @@ class OandaClient:
             return None
 
     async def get_account_balance(self):
-        """
-        Fetches account balance.
-        Returns float balance or None.
-        """
         url = f"{self.base_url}/accounts/{self.account_id}/summary"
         try:
             response = await self.client.get(url)
@@ -107,10 +91,6 @@ class OandaClient:
             return None
 
     async def get_open_trades(self):
-        """
-        Fetches list of open trades.
-        Returns list of trades or empty list.
-        """
         url = f"{self.base_url}/accounts/{self.account_id}/openTrades"
         try:
             response = await self.client.get(url)
