@@ -26,9 +26,13 @@ class TradeCloser:
         if '.' in open_time_str:
             date_part, frac_part = open_time_str.split('.', 1)
             frac_digits = ''.join(filter(str.isdigit, frac_part))
+            frac_digits = frac_digits[:6]  # limit to microseconds precision
+            frac_digits = frac_digits.rstrip('0')  # strip trailing zeros
             tz_part = frac_part[len(frac_digits):]
-            frac_digits = frac_digits[:6]  
-            open_time_str = f"{date_part}.{frac_digits}{tz_part}"
+            if frac_digits:
+                open_time_str = f"{date_part}.{frac_digits}{tz_part}"
+            else:
+                open_time_str = f"{date_part}{tz_part}"
 
         open_time = datetime.fromisoformat(open_time_str)
         current_price = await self.oanda.get_price(instrument)
@@ -51,4 +55,27 @@ class TradeCloser:
 
         # Trailing stop logic
         entry_price = float(trade["price"])
-        is_short = trade
+        is_short = trade["currentUnits"].startswith("-")
+        stop_distance = self.trailing_stop_pips * 0.0001  # assuming pip is 0.0001 for forex pairs except JPY pairs
+        # Adjust pip value for JPY pairs (2 decimal places)
+        if instrument.endswith("JPY"):
+            stop_distance = self.trailing_stop_pips * 0.01
+
+        if is_short:
+            stop_price = entry_price + stop_distance
+            if current_price >= stop_price:
+                logger.info(f"Trade {trade_id} triggered trailing stop (short), closing")
+                await self._close_trade(trade_id, instrument)
+        else:
+            stop_price = entry_price - stop_distance
+            if current_price <= stop_price:
+                logger.info(f"Trade {trade_id} triggered trailing stop (long), closing")
+                await self._close_trade(trade_id, instrument)
+
+    async def _close_trade(self, trade_id, instrument):
+        success = await self.oanda.close_trade(trade_id, instrument)
+        if success:
+            self.position_sizer.close_trade(instrument)
+            logger.info(f"Trade {trade_id} closed successfully")
+        else:
+            logger.error(f"Failed to close trade {trade_id}")
