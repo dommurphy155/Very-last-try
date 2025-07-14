@@ -1,4 +1,4 @@
-import logging
+ import logging
 import httpx
 
 logger = logging.getLogger("oanda_client")
@@ -76,7 +76,6 @@ class OandaClient:
                 data = response.json()
                 prices = data.get("prices")
                 if prices and len(prices) > 0:
-                    # Use the mid price between bid and ask
                     bid = float(prices[0]["bids"][0]["price"])
                     ask = float(prices[0]["asks"][0]["price"])
                     mid_price = (bid + ask) / 2
