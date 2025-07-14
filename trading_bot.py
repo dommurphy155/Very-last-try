@@ -1,3 +1,4 @@
+import os
 import logging
 from oanda_client import OandaClient
 from position_sizer import PositionSizer
@@ -8,7 +9,13 @@ logger = logging.getLogger("trading_bot")
 
 class TradingBot:
     def __init__(self):
-        self.oanda = OandaClient()
+        api_key = os.getenv("OANDA_API_KEY")
+        account_id = os.getenv("OANDA_ACCOUNT_ID")
+
+        if not api_key or not account_id:
+            raise ValueError("OANDA_API_KEY and OANDA_ACCOUNT_ID must be set in environment variables.")
+
+        self.oanda = OandaClient(api_key, account_id)
         self.position_sizer = PositionSizer(self.oanda)
         self.trade_executor = TradeExecutor(self.oanda, self.position_sizer)
         self.trade_closer = TradeCloser(self.oanda, self.position_sizer)
