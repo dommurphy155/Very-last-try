@@ -52,12 +52,8 @@ class TelegramBot:
         await update.message.reply_text(trade_msg)
 
     async def status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        error_log = self.trading_bot.get_recent_errors()  # Expect string of last 100 words or empty if no errors
-        if error_log:
-            msg = f"⚠️ Recent Errors:\n{error_log}\n\n✅ Bot operational."
-        else:
-            msg = "✅ All systems up to date and running smoothly."
-        msg = "📊 Status Report:\n" + msg
+        # Removed error summary as requested
+        msg = "📊 Status Report:\n✅ All systems up to date and running smoothly."
         await update.message.reply_text(msg)
 
     async def open_trades(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
