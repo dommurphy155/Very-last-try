@@ -12,7 +12,7 @@ class OandaClient:
         if not self.api_key or not self.account_id:
             raise ValueError("OANDA_API_KEY and OANDA_ACCOUNT_ID must be set as environment variables")
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
-        self.demo_mode = True
+        self.demo_mode = True  # toggle for demo/live
 
     async def get_account_balance(self):
         url = f"{self.base_url}/accounts/{self.account_id}/summary"
