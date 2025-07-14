@@ -91,6 +91,20 @@ class OandaClient:
             logger.error(f"Exception while fetching account balance: {e}")
             return None
 
+    async def get_margin_available(self) -> Optional[float]:
+        url = f"{self.base_url}/accounts/{self.account_id}/summary"
+        try:
+            response = await self.client.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                margin_available = float(data["account"].get("marginAvailable", 0))
+                return margin_available
+            logger.error(f"Failed to fetch margin available: {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Exception while fetching margin available: {e}")
+            return None
+
     async def get_open_trades(self) -> list[dict]:
         url = f"{self.base_url}/accounts/{self.account_id}/openTrades"
         try:
