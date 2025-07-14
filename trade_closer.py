@@ -35,7 +35,7 @@ class TradeCloser:
 
         unrealized_pl = float(trade.get("unrealizedPL", 0))
         initial_margin = float(trade.get("initialMarginRequired", 1))  # Avoid div by zero
-        duration = datetime.utcnow() - open_time
+        duration = datetime.now(open_time.tzinfo) - open_time
 
         if duration > self.max_trade_duration:
             logger.info(f"Trade {trade_id} held too long ({duration}), closing")
@@ -49,7 +49,6 @@ class TradeCloser:
             await self._close_trade(trade_id, instrument)
             return
 
-        # Trailing stop logic
         entry_price = float(trade["price"])
         is_short = trade["currentUnits"].startswith("-")
 
@@ -68,7 +67,7 @@ class TradeCloser:
                 await self._close_trade(trade_id, instrument)
 
     async def _close_trade(self, trade_id, instrument):
-        success = await self.oanda.close_trade(trade_id, instrument)
+        success, _ = await self.oanda.close_trade(trade_id)
         if success:
             self.position_sizer.close_trade(instrument)
             logger.info(f"Trade {trade_id} closed successfully")

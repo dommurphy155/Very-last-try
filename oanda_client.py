@@ -1,6 +1,7 @@
 import logging
 import os
 import httpx
+from typing import Optional
 
 logger = logging.getLogger("oanda_client")
 logger.info(f"[INIT] OandaClient loaded from: {__file__} | PID: {os.getpid()}")
@@ -16,7 +17,7 @@ class OandaClient:
         }
         self.client = httpx.AsyncClient(headers=self.headers)
 
-    async def create_trade(self, instrument: str, units: int):
+    async def create_trade(self, instrument: str, units: int) -> tuple[bool, dict | str]:
         url = f"{self.base_url}/accounts/{self.account_id}/orders"
         order_data = {
             "order": {
@@ -41,7 +42,7 @@ class OandaClient:
             logger.error(f"Exception while creating trade: {e}")
             return False, str(e)
 
-    async def close_trade(self, trade_id: str):
+    async def close_trade(self, trade_id: str) -> tuple[bool, dict | str]:
         url = f"{self.base_url}/accounts/{self.account_id}/trades/{trade_id}/close"
         try:
             response = await self.client.put(url)
@@ -57,8 +58,8 @@ class OandaClient:
             logger.error(f"Exception while closing trade: {e}")
             return False, str(e)
 
-    async def get_price(self, instrument: str):
-        url = f"{self.base_url}/instruments/{instrument}/pricing"
+    async def get_price(self, instrument: str) -> Optional[float]:
+        url = f"{self.base_url}/accounts/{self.account_id}/pricing"
         params = {"instruments": instrument}
         try:
             response = await self.client.get(url, params=params)
@@ -76,7 +77,7 @@ class OandaClient:
             logger.error(f"Exception while fetching price: {e}")
             return None
 
-    async def get_account_balance(self):
+    async def get_account_balance(self) -> Optional[float]:
         url = f"{self.base_url}/accounts/{self.account_id}/summary"
         try:
             response = await self.client.get(url)
@@ -90,7 +91,7 @@ class OandaClient:
             logger.error(f"Exception while fetching account balance: {e}")
             return None
 
-    async def get_open_trades(self):
+    async def get_open_trades(self) -> list[dict]:
         url = f"{self.base_url}/accounts/{self.account_id}/openTrades"
         try:
             response = await self.client.get(url)
