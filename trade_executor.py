@@ -1,5 +1,6 @@
 import logging
 from oanda_client import OandaClient
+from position_sizer import PositionSizer
 
 logger = logging.getLogger("trade_executor")
 
