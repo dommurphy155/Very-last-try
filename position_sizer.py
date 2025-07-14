@@ -13,7 +13,7 @@ logger = logging.getLogger("position_sizer")
 STATE_FILE = "trade_state.json"
 
 class PositionSizer:
-    def __init__(self, oanda_client: OandaClient, risk_per_trade=0.01, max_open_trades=12):
+    def __init__(self, oanda_client: OandaClient, risk_per_trade=0.01, max_open_trades=100):
         self.oanda_client = oanda_client
         self.risk_per_trade = risk_per_trade  # max % of balance per trade
         self.max_open_trades = max_open_trades
