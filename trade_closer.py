@@ -17,10 +17,22 @@ class TradeCloser:
         for trade in open_trades:
             await self._evaluate_trade(trade)
 
-    async def _evaluate_trade(self, trade):
-        trade_id = trade["id"]
-        instrument = trade["instrument"]
-        open_time = datetime.fromisoformat(trade["openTime"].replace("Z", "+00:00"))
+async def _evaluate_trade(self, trade):
+    trade_id = trade["id"]
+    instrument = trade["instrument"]
+    open_time_str = trade["openTime"].replace("Z", "+00:00")
+
+    if '.' in open_time_str:
+        date_part, frac_part = open_time_str.split('.', 1)
+        frac_digits = ''.join(filter(str.isdigit, frac_part))
+        tz_part = frac_part[len(frac_digits):]
+        frac_digits = frac_digits[:6]  
+        open_time_str = f"{date_part}.{frac_digits}{tz_part}"
+
+    open_time = datetime.fromisoformat(open_time_str)
+
+
+open_time = datetime.fromisoformat(open_time_str)
         current_price = await self.oanda.get_price(instrument)
 
         unrealized_pl = float(trade["unrealizedPL"])
