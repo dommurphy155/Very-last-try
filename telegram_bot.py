@@ -24,3 +24,6 @@ class TelegramBot:
 
     async def run_polling(self):
         await self.app.run_polling()
+        
+        
+        hi
