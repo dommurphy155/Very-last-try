@@ -104,3 +104,20 @@ class OandaClient:
         except Exception as e:
             logger.error(f"Exception while fetching account balance: {e}")
             return None
+
+    async def get_open_trades(self):
+        """
+        Fetches list of open trades.
+        Returns list of trades or empty list.
+        """
+        url = f"{self.base_url}/accounts/{self.account_id}/openTrades"
+        try:
+            response = await self.client.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("trades", [])
+            logger.error(f"Failed to fetch open trades: {response.text}")
+            return []
+        except Exception as e:
+            logger.error(f"Exception while fetching open trades: {e}")
+            return []
