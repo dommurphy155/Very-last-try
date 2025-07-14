@@ -19,7 +19,7 @@ class TelegramBot:
         await update.message.reply_text("Bot is running. Use /trade to place a trade.")
 
     async def trade(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        self.trading_bot.run()
+        await self.trading_bot.run()
         await update.message.reply_text("Trade command executed.")
 
     async def run_polling(self):
