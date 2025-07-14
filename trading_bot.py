@@ -22,8 +22,10 @@ class TradingBot:
         self.instruments = ["EUR_USD", "GBP_USD", "USD_JPY", "AUD_USD", "USD_CHF"]
 
     async def run(self):
+        # Try trades on all instruments
         for instrument in self.instruments:
             await self._try_trade(instrument)
+        # Monitor and close trades
         await self.trade_closer.monitor_trades()
 
     async def _try_trade(self, instrument):
