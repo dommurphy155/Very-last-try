@@ -1,32 +1,29 @@
-import os
 import logging
 from oanda_client import OandaClient
-from instrument_selector import choose_best_instrument
+from position_sizer import PositionSizer
+from trade_executor import TradeExecutor
 
-logger = logging.getLogger("trading_bot")
+logger = logging.getLogger(__name__)
 
 class TradingBot:
     def __init__(self):
         self.oanda = OandaClient()
-        self.instrument = choose_best_instrument()
+        self.position_sizer = PositionSizer(self.oanda)
+        self.trade_executor = TradeExecutor(self.oanda, self.position_sizer)
+        self.instrument = "EUR_USD"  # default
 
-    def calculate_units(self):
-        return 100  # placeholder for now
+    async def select_instrument(self):
+        # Minimal logic example: rotate between EUR_USD and GBP_USD
+        import random
+        self.instrument = random.choice(["EUR_USD", "GBP_USD"])
+        logger.info(f"Selected instrument: {self.instrument}")
 
     async def run(self):
-        try:
-            units = self.calculate_units()
-            side = "buy"
-            result = await self.oanda.create_trade(self.instrument, units, side)
-            if result:
-                logger.info(f"Trade placed: {side} {units} {self.instrument}")
-            else:
-                logger.warning("Trade not placed.")
-        except Exception as e:
-            logger.exception(f"Trade execution failed: {e}")
-
-    def send_telegram_message(self, bot, chat_id, message):
-        try:
-            bot.send_message(chat_id=chat_id, text=message)
-        except Exception as e:
-            logger.error(f"Telegram send failed: {e}")
+        await self.select_instrument()
+        stop_loss_pips = 10  # fixed stop loss for now
+        direction = "buy"    # minimal buy logic, replace with algo later
+        success = await self.trade_executor.place_trade(self.instrument, stop_loss_pips, direction)
+        if success:
+            logger.info(f"Trade placed successfully on {self.instrument}")
+        else:
+            logger.error(f"Trade failed on {self.instrument}")
