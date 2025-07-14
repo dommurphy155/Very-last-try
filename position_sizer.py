@@ -61,8 +61,8 @@ class PositionSizer:
             perf["confidence"] = max(0.1, perf["confidence"] - 0.1)  # decrease confidence on loss
         self._save_state()
 
-def get_confidence(self, instrument: str):
-    return self.trade_state["performance"].get(instrument, {}).get("confidence", 0.5)
+    def get_confidence(self, instrument: str):
+        return self.trade_state["performance"].get(instrument, {}).get("confidence", 0.5)
 
     def can_trade(self, instrument: str):
         # Check cooldown
