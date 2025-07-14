@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from oanda_client import OandaClient
 
 logger = logging.getLogger(__name__)
@@ -13,10 +14,10 @@ class TradingBot:
         # Minimal dynamic sizing: fixed 100 units
         return 100
 
-    def run(self):
+    async def run(self):
         units = self.calculate_units()
         side = "buy"  # minimal demo mode always buy
-        result = self.oanda.create_trade(self.instrument, units, side)
+        result = await self.oanda.create_trade(self.instrument, units, side)
         if result:
             logger.info(f"Trade placed: {side} {units} {self.instrument}")
         else:
