@@ -1,7 +1,17 @@
+# trade_closer.py
+
 import logging
+import re
 from datetime import datetime, timedelta
 
 logger = logging.getLogger("trade_closer")
+
+def parse_oanda_time(time_str: str) -> datetime:
+    """Clean and parse extended-precision OANDA timestamps safely."""
+    time_str = time_str.replace("Z", "+00:00")
+    pattern = r'(\.\d{6})\d*'
+    fixed_str = re.sub(pattern, r'\1', time_str)
+    return datetime.fromisoformat(fixed_str)
 
 class TradeCloser:
     def __init__(self, oanda_client, position_sizer):
@@ -20,21 +30,7 @@ class TradeCloser:
     async def _evaluate_trade(self, trade):
         trade_id = trade["id"]
         instrument = trade["instrument"]
-        open_time_str = trade["openTime"].replace("Z", "+00:00")
-
-        # Fix fractional seconds length for isoformat parsing
-        if '.' in open_time_str:
-            date_part, frac_part = open_time_str.split('.', 1)
-            frac_digits = ''.join(filter(str.isdigit, frac_part))
-            frac_digits = frac_digits[:6]  # limit to microseconds precision
-            frac_digits = frac_digits.rstrip('0')  # strip trailing zeros
-            tz_part = frac_part[len(frac_digits):]
-            if frac_digits:
-                open_time_str = f"{date_part}.{frac_digits}{tz_part}"
-            else:
-                open_time_str = f"{date_part}{tz_part}"
-
-        open_time = datetime.fromisoformat(open_time_str)
+        open_time = parse_oanda_time(trade["openTime"])
         current_price = await self.oanda.get_price(instrument)
 
         unrealized_pl = float(trade.get("unrealizedPL", 0))
@@ -42,34 +38,33 @@ class TradeCloser:
         duration = datetime.utcnow() - open_time
 
         if duration > self.max_trade_duration:
-            logger.info(f"Trade {trade_id} held too long, closing")
+            logger.info(f"Trade {trade_id} held too long ({duration}), closing")
             await self._close_trade(trade_id, instrument)
             return
 
-        rr_ratio = (unrealized_pl / initial_margin) if initial_margin > 0 else 0
+        rr_ratio = unrealized_pl / initial_margin if initial_margin > 0 else 0
 
         if unrealized_pl >= self.min_profit_threshold and rr_ratio >= self.min_risk_reward:
-            logger.info(f"Trade {trade_id} meets profit threshold (PL: {unrealized_pl}, RR: {rr_ratio}), closing")
+            logger.info(f"Trade {trade_id} meets PL threshold (PL: {unrealized_pl}, RR: {rr_ratio:.2f}), closing")
             await self._close_trade(trade_id, instrument)
             return
 
         # Trailing stop logic
         entry_price = float(trade["price"])
         is_short = trade["currentUnits"].startswith("-")
-        stop_distance = self.trailing_stop_pips * 0.0001  # assuming pip is 0.0001 for forex pairs except JPY pairs
-        # Adjust pip value for JPY pairs (2 decimal places)
-        if instrument.endswith("JPY"):
-            stop_distance = self.trailing_stop_pips * 0.01
+
+        pip_size = 0.01 if instrument.endswith("JPY") else 0.0001
+        stop_distance = self.trailing_stop_pips * pip_size
 
         if is_short:
             stop_price = entry_price + stop_distance
             if current_price >= stop_price:
-                logger.info(f"Trade {trade_id} triggered trailing stop (short), closing")
+                logger.info(f"Trade {trade_id} hit trailing stop (short), closing")
                 await self._close_trade(trade_id, instrument)
         else:
             stop_price = entry_price - stop_distance
             if current_price <= stop_price:
-                logger.info(f"Trade {trade_id} triggered trailing stop (long), closing")
+                logger.info(f"Trade {trade_id} hit trailing stop (long), closing")
                 await self._close_trade(trade_id, instrument)
 
     async def _close_trade(self, trade_id, instrument):
