@@ -17,7 +17,7 @@ class PositionSizer:
         self.oanda_client = oanda_client
         self.risk_per_trade = risk_per_trade  # max % of balance per trade
         self.max_open_trades = max_open_trades
-        self.trade_cooldown_minutes = 5  # cooldown per instrument in minutes
+        self.trade_cooldown_minutes = 0.1  # cooldown per instrument in minutes
         self.min_confidence = 0.5  # minimum confidence to trade
         self.trade_state = {
             "last_trade_time": {},  # instrument -> datetime ISO string
