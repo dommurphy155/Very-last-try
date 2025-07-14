@@ -1,41 +1,24 @@
 import os
-import aiohttp
 import logging
-
-OANDA_API_KEY = os.getenv("OANDA_API_KEY")
-OANDA_ACCOUNT_ID = os.getenv("OANDA_ACCOUNT_ID")
-DEMO_MODE = True
+import httpx
 
 logger = logging.getLogger(__name__)
 
 class OandaClient:
-    def __init__(self, session: aiohttp.ClientSession):
-        self.api_key = OANDA_API_KEY
-        self.account_id = OANDA_ACCOUNT_ID
-        self.session = session
+    def __init__(self):
+        self.api_key = os.getenv("OANDA_API_KEY")
+        self.account_id = os.getenv("OANDA_ACCOUNT_ID")
         self.base_url = "https://api-fxpractice.oanda.com/v3"
+        self.demo_mode = True if not self.api_key or not self.account_id else False
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
 
-    async def _request(self, method, endpoint, **kwargs):
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        url = self.base_url + endpoint
-        try:
-            async with self.session.request(method, url, headers=headers, **kwargs) as resp:
-                if resp.status != 200:
-                    text = await resp.text()
-                    logger.warning(f"OANDA API {method} {endpoint} failed {resp.status}: {text}")
-                    return None
-                return await resp.json()
-        except Exception as e:
-            logger.error(f"OANDA API request error: {e}")
-            return None
-
-    async def get_open_trades(self):
-        return await self._request("GET", f"/accounts/{self.account_id}/openTrades")
-
-    async def create_trade(self, instrument: str, units: int, side: str):
-        if DEMO_MODE:
+    def create_trade(self, instrument: str, units: int, side: str):
+        if self.demo_mode:
             logger.info(f"DEMO_MODE: create_trade {side} {units} {instrument} skipped")
-            return {"demo": True, "instrument": instrument, "units": units, "side": side}
+            return None
         data = {
             "order": {
                 "instrument": instrument,
@@ -44,10 +27,16 @@ class OandaClient:
                 "positionFill": "DEFAULT"
             }
         }
-        return await self._request("POST", f"/accounts/{self.account_id}/orders", json=data)
-
-    async def close_trade(self, trade_id: str):
-        if DEMO_MODE:
-            logger.info(f"DEMO_MODE: close_trade {trade_id} skipped")
-            return {"demo": True, "trade_id": trade_id}
-        return await self._request("PUT", f"/accounts/{self.account_id}/trades/{trade_id}/close")
+        try:
+            resp = httpx.post(
+                f"{self.base_url}/accounts/{self.account_id}/orders",
+                headers=self.headers,
+                json=data,
+                timeout=10
+            )
+            resp.raise_for_status()
+            logger.info(f"Trade executed: {side} {units} {instrument}")
+            return resp.json()
+        except Exception as e:
+            logger.error(f"Error placing trade: {e}")
+            return None

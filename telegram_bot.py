@@ -1,25 +1,26 @@
-from telegram.ext import ApplicationBuilder, CommandHandler
 import os
+import logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from trading_bot import TradingBot
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+logger = logging.getLogger(__name__)
 
-class TelegramAppWrapper:
-    def __init__(self, app, bot):
-        self.app = app
-        self.bot = bot
+class TelegramBot:
+    def __init__(self):
+        self.token = os.getenv("TELEGRAM_BOT_TOKEN")
+        self.chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "0"))
+        self.trading_bot = TradingBot()
+        self.app = ApplicationBuilder().token(self.token).build()
+        self.app.add_handler(CommandHandler("start", self.start))
+        self.app.add_handler(CommandHandler("trade", self.trade))
+
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("Bot is running. Use /trade to place a trade.")
+
+    async def trade(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        self.trading_bot.run()
+        await update.message.reply_text("Trade command executed.")
+
     async def run_polling(self):
         await self.app.run_polling()
-    async def stop(self):
-        await self.app.stop()
-
-def build_telegram_app(trading_bot):
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", trading_bot.cmd_start))
-    app.add_handler(CommandHandler("status", trading_bot.cmd_status))
-    app.add_handler(CommandHandler("maketrade", trading_bot.cmd_maketrade))
-    app.add_handler(CommandHandler("canceltrade", trading_bot.cmd_canceltrade))
-    app.add_handler(CommandHandler("showlog", trading_bot.cmd_showlog))
-    app.add_handler(CommandHandler("pnl", trading_bot.cmd_pnl))
-    app.add_handler(CommandHandler("openpositions", trading_bot.cmd_openpositions))
-    app.add_handler(CommandHandler("strategystats", trading_bot.cmd_strategystats))
-    return TelegramAppWrapper(app, app.bot)
