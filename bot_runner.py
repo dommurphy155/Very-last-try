@@ -9,11 +9,9 @@ async def main():
     bot = TelegramBot()
     await bot.app.initialize()
     await bot.app.start()
-    # Run polling until stopped externally (Ctrl+C)
     await bot.app.updater.start_polling()
-    await bot.app.updater.idle()
-    await bot.app.stop()
-    await bot.app.shutdown()
+    # Hold the program open forever until externally stopped (ctrl+c)
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     nest_asyncio.apply()
