@@ -1,47 +1,106 @@
 import logging
-from oanda_client import OandaClient
-from position_sizer import PositionSizer
+import httpx
 
-logger = logging.getLogger("trade_executor")
+logger = logging.getLogger("oanda_client")
 
-class TradeExecutor:
-    def __init__(self, oanda_client: OandaClient, position_sizer: PositionSizer):
-        self.oanda_client = oanda_client
-        self.position_sizer = position_sizer
+class OandaClient:
+    def __init__(self, api_key: str, account_id: str):
+        self.api_key = api_key
+        self.account_id = account_id
+        self.base_url = "https://api-fxpractice.oanda.com/v3"
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        self.client = httpx.AsyncClient(headers=self.headers)
 
-    async def execute_trade(self, instrument: str, units: int):
-        if units <= 0:
-            logger.error("Units <= 0 or trade blocked by cooldown/max trades, abort trade")
-            return False
-
-        # Place trade
-        success, response = await self.oanda_client.create_trade(instrument, units)
-        if not success:
-            logger.error(f"Trade failed for {instrument}: {response}")
-            return False
-
-        self.position_sizer.record_trade(instrument)
-        logger.info(f"Trade placed: buy {units} units on {instrument}")
-        return True
-
-    async def evaluate_exit(self, instrument: str, trade_id: str, entry_price: float):
+    async def create_trade(self, instrument: str, units: int):
         """
-        Lightweight logic to evaluate if the trade should be closed early
-        Uses momentum reversal, trailing profit threshold, and time decay exit
+        Places a market order for the specified instrument and units.
+        Returns (success: bool, response: dict or str)
         """
-        price = await self.oanda_client.get_price(instrument)
-        if price is None:
-            return False
+        url = f"{self.base_url}/accounts/{self.account_id}/orders"
+        order_data = {
+            "order": {
+                "units": str(units),
+                "instrument": instrument,
+                "timeInForce": "FOK",
+                "type": "MARKET",
+                "positionFill": "DEFAULT"
+            }
+        }
+        try:
+            response = await self.client.post(url, json=order_data)
+            if response.status_code == 201:
+                data = response.json()
+                logger.info(f"Trade created successfully: {data}")
+                return True, data
+            else:
+                error = response.json()
+                logger.error(f"Failed to create trade: {error}")
+                return False, error
+        except Exception as e:
+            logger.error(f"Exception while creating trade: {e}")
+            return False, str(e)
 
-        pnl_threshold = 0.002  # 20 pips profit
-        loss_limit = -0.002    # 20 pips loss
+    async def close_trade(self, trade_id: str):
+        """
+        Closes an open trade by trade_id.
+        Returns (success: bool, response: dict or str)
+        """
+        url = f"{self.base_url}/accounts/{self.account_id}/trades/{trade_id}/close"
+        try:
+            response = await self.client.put(url)
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"Trade closed successfully: {data}")
+                return True, data
+            else:
+                error = response.json()
+                logger.error(f"Failed to close trade: {error}")
+                return False, error
+        except Exception as e:
+            logger.error(f"Exception while closing trade: {e}")
+            return False, str(e)
 
-        change = (price - entry_price) / entry_price
+    async def get_price(self, instrument: str):
+        """
+        Fetches the latest price for the instrument.
+        Returns float price or None.
+        """
+        url = f"{self.base_url}/instruments/{instrument}/pricing"
+        params = {"instruments": instrument}
+        try:
+            response = await self.client.get(url, params=params)
+            if response.status_code == 200:
+                data = response.json()
+                prices = data.get("prices")
+                if prices and len(prices) > 0:
+                    # Use the mid price between bid and ask
+                    bid = float(prices[0]["bids"][0]["price"])
+                    ask = float(prices[0]["asks"][0]["price"])
+                    mid_price = (bid + ask) / 2
+                    return mid_price
+            logger.error(f"Failed to fetch price for {instrument}: {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Exception while fetching price: {e}")
+            return None
 
-        if change >= pnl_threshold or change <= loss_limit:
-            logger.info(f"Exit condition met for {instrument} | Δ: {change:.4f}")
-            await self.oanda_client.close_trade(trade_id)
-            self.position_sizer.close_trade(instrument)
-            return True
-
-        return False
+    async def get_account_balance(self):
+        """
+        Fetches account balance.
+        Returns float balance or None.
+        """
+        url = f"{self.base_url}/accounts/{self.account_id}/summary"
+        try:
+            response = await self.client.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                balance = float(data["account"]["balance"])
+                return balance
+            logger.error(f"Failed to fetch account balance: {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Exception while fetching account balance: {e}")
+            return None
