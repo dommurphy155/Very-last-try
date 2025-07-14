@@ -1,7 +1,9 @@
 import logging
+import os
 import httpx
 
 logger = logging.getLogger("oanda_client")
+logger.info(f"[INIT] OandaClient loaded from: {__file__} | PID: {os.getpid()}")
 
 class OandaClient:
     def __init__(self, api_key: str, account_id: str):
@@ -76,7 +78,6 @@ class OandaClient:
                 data = response.json()
                 prices = data.get("prices")
                 if prices and len(prices) > 0:
-                    # Use the mid price between bid and ask
                     bid = float(prices[0]["bids"][0]["price"])
                     ask = float(prices[0]["asks"][0]["price"])
                     mid_price = (bid + ask) / 2
@@ -121,5 +122,3 @@ class OandaClient:
         except Exception as e:
             logger.error(f"Exception while fetching open trades: {e}")
             return []
-import os
-logger.info(f"[INIT] OandaClient loaded from: {__file__} | PID: {os.getpid()}")
