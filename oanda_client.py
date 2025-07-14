@@ -121,3 +121,5 @@ class OandaClient:
         except Exception as e:
             logger.error(f"Exception while fetching open trades: {e}")
             return []
+import os
+logger.info(f"[INIT] OandaClient loaded from: {__file__} | PID: {os.getpid()}")
