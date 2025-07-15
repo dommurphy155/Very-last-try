@@ -1,6 +1,5 @@
 python-telegram-bot==20.3
 aiohttp>=3.8.4
-pandas>=1.5.3
 numpy>=1.24.2
 loguru>=0.7.0
 oandapyV20>=1.4.2
