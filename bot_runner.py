@@ -1,5 +1,3 @@
-# bot_runner.py
-
 import asyncio
 import logging
 import signal
@@ -22,11 +20,13 @@ class BotRunner:
             CONFIG.TELEGRAM_BOT_TOKEN, CONFIG.TELEGRAM_CHAT_ID, self.state, self.trading_bot.trade_executor
         )
         self.running = True
-        self.loop = asyncio.get_event_loop()
 
     async def run(self):
+        await self.client.init_session()
         await self.telegram_bot.start()
         await self.trading_bot.start()
+
+        telegram_task = asyncio.create_task(self.telegram_bot.run())
 
         try:
             while self.running:
@@ -38,6 +38,7 @@ class BotRunner:
                     logger.exception(f"Error in trade cycle: {e}")
                     await self.telegram_bot.send_message(f"⚠️ Error in trade cycle: {e}")
         finally:
+            telegram_task.cancel()
             await self.shutdown()
 
     async def shutdown(self):
@@ -50,13 +51,12 @@ class BotRunner:
         await self.client.close()
         logger.info("✅ Bot shutdown complete.")
 
-    def start(self):
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            self.loop.add_signal_handler(sig, lambda: asyncio.create_task(self.shutdown()))
-        self.loop.run_until_complete(self.run())
-
-def main():
-    BotRunner().start()
+async def main():
+    runner = BotRunner()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda: asyncio.create_task(runner.shutdown()))
+    await runner.run()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
