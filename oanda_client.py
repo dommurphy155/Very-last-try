@@ -45,48 +45,29 @@ class OandaClient:
             raise
 
     async def get_candles(self, instrument, granularity="M1", count=100):
-        """
-        Fetch candlestick data for an instrument.
-        granularity: M1, M5, M15, etc.
-        count: number of candles
-        """
         endpoint = f"/instruments/{instrument}/candles"
         params = {
             "granularity": granularity,
             "count": count,
-            "price": "M"  # Midpoint prices only
+            "price": "M"
         }
         return await self._request("GET", endpoint, params=params)
 
     async def get_prices(self, instruments):
-        """
-        Get current prices for one or more instruments (comma-separated string).
-        """
         endpoint = f"/accounts/{self.account_id}/pricing"
-        params = {
-            "instruments": instruments
-        }
+        params = {"instruments": instruments}
         return await self._request("GET", endpoint, params=params)
 
-    async def create_order(self, instrument, units, order_type="MARKET", price=None):
-        """
-        Place an order on the market.
-        units: positive for buy, negative for sell.
-        order_type: "MARKET", "LIMIT", etc.
-        price: required for LIMIT orders.
-        """
+    async def create_market_order(self, side, units, instrument):
         endpoint = f"/accounts/{self.account_id}/orders"
         order_data = {
             "order": {
                 "instrument": instrument,
-                "units": str(units),
-                "type": order_type,
+                "units": str(units if side == "BUY" else -units),
+                "type": "MARKET",
                 "positionFill": "DEFAULT"
             }
         }
-        if order_type == "LIMIT" and price is not None:
-            order_data["order"]["price"] = str(price)
-
         return await self._request("POST", endpoint, json=order_data)
 
     async def get_open_trades(self):
@@ -97,4 +78,6 @@ class OandaClient:
         endpoint = f"/accounts/{self.account_id}/trades/{trade_id}/close"
         return await self._request("PUT", endpoint)
 
-    # Add more specialized methods as needed for your strategies...
+    async def get_account_summary(self):
+        endpoint = f"/accounts/{self.account_id}/summary"
+        return await self._request("GET", endpoint)

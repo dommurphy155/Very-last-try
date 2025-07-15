@@ -1,45 +1,37 @@
-# state_manager.py
-
 import json
 import threading
 import logging
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 class StateManager:
-    def __init__(self, state_file):
-        self.state_file = Path(state_file)
+    def __init__(self, filepath="trade_state.json"):
+        self.filepath = filepath
         self.lock = threading.Lock()
+        self.state = self.load_state()
 
     def load_state(self):
-        if not self.state_file.exists():
-            logger.info("State file not found. Initializing new state.")
-            return {
-                "open_trades": {},
-                "trade_history": [],
-                "last_scan": None,
-                "cooldown_until": None,
-                # Add other necessary default state keys here
-            }
         try:
-            with self.lock, self.state_file.open("r") as f:
+            with open(self.filepath, "r") as f:
                 state = json.load(f)
-            logger.info("State loaded successfully.")
-            return state
-        except Exception as e:
-            logger.error(f"Failed to load state file: {e}")
-            return {
-                "open_trades": {},
-                "trade_history": [],
-                "last_scan": None,
-                "cooldown_until": None,
-            }
+                logger.info("State loaded from file.")
+                return state
+        except (FileNotFoundError, json.JSONDecodeError):
+            logger.warning("State file missing or corrupt; starting fresh.")
+            return {"open_trades": {}}
 
-    def save_state(self, state):
+    def save_state(self):
         try:
-            with self.lock, self.state_file.open("w") as f:
-                json.dump(state, f, indent=2)
-            logger.debug("State saved successfully.")
+            with self.lock:
+                with open(self.filepath, "w") as f:
+                    json.dump(self.state, f, indent=4)
+            logger.debug("State saved to file.")
         except Exception as e:
-            logger.error(f"Failed to save state file: {e}")
+            logger.error(f"Failed to save state: {e}")
+
+    def get(self, key, default=None):
+        return self.state.get(key, default)
+
+    def set(self, key, value):
+        self.state[key] = value
+        self.save_state()

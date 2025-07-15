@@ -1,65 +1,49 @@
-import asyncio
 import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from trading_bot import TradingBot
 
 logger = logging.getLogger(__name__)
 
 class TelegramBot:
-    def __init__(self, token, chat_id, state, trade_executor):
+    def __init__(self, token, chat_id, trading_bot):
         self.token = token
         self.chat_id = chat_id
-        self.state = state
-        self.trade_executor = trade_executor
-        self.app = None
-        self._polling_task = None
-
-    async def start(self):
+        self.trading_bot = trading_bot
         self.app = ApplicationBuilder().token(self.token).build()
+
+        self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("status", self.status))
-        self.app.add_handler(CommandHandler("maketrade", self.maketrade))
-        self.app.add_handler(CommandHandler("whatyoudoin", self.whatyoudoin))
+        self.app.add_handler(CommandHandler("maketrade", self.make_trade))
+        self.app.add_handler(CommandHandler("stop", self.stop))
+        self.app.add_handler(CommandHandler("closeall", self.close_all))
 
-        self._polling_task = asyncio.create_task(self.app.run_polling())
-        logger.info("✅ Telegram bot started.")
-
-    async def stop(self):
-        if self._polling_task:
-            self._polling_task.cancel()
-            try:
-                await self._polling_task
-            except asyncio.CancelledError:
-                pass
-        if self.app:
-            await self.app.shutdown()
-            await self.app.stop()
-        logger.info("🛑 Telegram bot stopped.")
-
-    async def send_message(self, text):
-        if not self.app or not self.app.bot:
-            return
-        try:
-            await self.app.bot.send_message(chat_id=self.chat_id, text=text)
-        except Exception as e:
-            logger.error(f"Telegram send error: {e}")
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="🤖 AI Forex Bot started. Use /status to check bot status.")
 
     async def status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        msg = f"🤖 Bot Status\n"
-        msg += f"Trades: {len(self.state.get('open_trades', {}))}\n"
-        msg += f"Cooldown Active: {self.trade_executor.is_cooldown_active()}\n"
-        msg += f"Last Scan: {self.state.get('last_scan')}\n"
-        await update.message.reply_text(msg)
+        open_trades = self.trading_bot.state.get("open_trades", {})
+        msg = f"Bot running: {self.trading_bot.running}\nOpen trades: {len(open_trades)}"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
 
-    async def maketrade(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        signal = await self.trade_executor.trade_logic.generate_signal()
-        if signal:
-            success = await self.trade_executor.execute_trade(signal)
-            await update.message.reply_text(f"Manual trade {'✅' if success else '❌'}: {signal}")
-        else:
-            await update.message.reply_text("No valid signal.")
+    async def make_trade(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not self.trading_bot.running:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="Bot is not running.")
+            return
+        await self.trading_bot.trade_cycle()
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Trade cycle executed.")
 
-    async def whatyoudoin(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        diag = f"📊 Diagnostics\n"
-        diag += f"Open Trades: {len(self.state.get('open_trades', {}))}\n"
-        diag += f"State Keys: {list(self.state.keys())}\n"
-        await update.message.reply_text(diag)
+    async def stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.trading_bot.stop()
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Bot stopped.")
+
+    async def close_all(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        trades = list(self.trading_bot.state.get("open_trades", {}).keys())
+        for trade_id in trades:
+            await self.trading_bot.client.close_trade(trade_id)
+            self.trading_bot.state["open_trades"].pop(trade_id, None)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="All trades closed.")
+
+    def run(self):
+        self.app.run_polling()

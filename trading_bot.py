@@ -1,5 +1,3 @@
-# trading_bot.py
-
 import logging
 from trade_logic import TradeLogic
 from trade_executor import TradeExecutor
@@ -32,8 +30,8 @@ class TradingBot:
             if success:
                 logger.info(f"✅ Trade executed: {signal}")
         else:
-            logger.debug("No valid signal.")
+            logger.debug("No valid trade signal.")
 
-        closed = await self.trade_executor.monitor_trades()
-        if closed:
-            logger.info(f"📉 Closed trades: {closed}")
+        closed_trades = await self.trade_executor.monitor_trades()
+        if closed_trades:
+            logger.info(f"📉 Closed trades: {closed_trades}")

@@ -1,29 +1,28 @@
-# utils.py
-
 import logging
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-def fetch_candles(instrument, granularity, count):
-    """
-    Placeholder function to fetch candle data.
-    Replace with real OANDA API calls or injected client.
-    Returns list of dicts with 'high', 'low', 'close' prices.
-    """
+def calculate_atr(candles, period=14):
     try:
-        # Dummy data for testing - generate dummy OHLC candles
-        base_price = 1.1000
-        candles = []
-        for i in range(count):
-            close = base_price + i * 0.0001
-            high = close + 0.0002
-            low = close - 0.0002
-            candles.append({"high": high, "low": low, "close": close})
-        return candles
+        highs = [float(c["high"]) for c in candles]
+        lows = [float(c["low"]) for c in candles]
+        closes = [float(c["close"]) for c in candles]
+
+        trs = []
+        for i in range(1, len(candles)):
+            tr = max(
+                highs[i] - lows[i],
+                abs(highs[i] - closes[i-1]),
+                abs(lows[i] - closes[i-1])
+            )
+            trs.append(tr)
+
+        atr = sum(trs[-period:]) / period if len(trs) >= period else sum(trs) / len(trs)
+        return atr
     except Exception as e:
-        logger.error(f"Failed to fetch candles: {e}")
-        return []
+        logger.error(f"Failed to calculate ATR: {e}")
+        return 0.0
 
 def calculate_rsi(candles, period=14):
     try:
@@ -52,32 +51,3 @@ def calculate_macd(candles, fast=12, slow=26, signal=9):
         logger.error(f"Failed to calculate MACD: {e}")
         length = len(candles)
         return [0] * length, [0] * length
-
-def calculate_atr(candles, period=14):
-    """
-    Calculate Average True Range (ATR) from candle data.
-    Candles must have 'high', 'low', 'close' keys.
-    Returns float ATR value.
-    """
-    try:
-        highs = [float(candle["high"]) for candle in candles]
-        lows = [float(candle["low"]) for candle in candles]
-        closes = [float(candle["close"]) for candle in candles]
-
-        trs = []
-        for i in range(1, len(candles)):
-            tr = max(
-                highs[i] - lows[i],
-                abs(highs[i] - closes[i-1]),
-                abs(lows[i] - closes[i-1])
-            )
-            trs.append(tr)
-
-        if len(trs) >= period:
-            atr = sum(trs[-period:]) / period
-        else:
-            atr = sum(trs) / len(trs) if trs else 0.0
-        return atr
-    except Exception as e:
-        logger.error(f"Failed to calculate ATR: {e}")
-        return 0.0

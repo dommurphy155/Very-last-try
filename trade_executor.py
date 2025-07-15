@@ -1,5 +1,3 @@
-# trade_executor.py
-
 import logging
 from datetime import datetime, timedelta
 from config import CONFIG
@@ -21,7 +19,7 @@ class TradeExecutor:
         try:
             units = CONFIG.DEFAULT_UNITS
             if units <= 0:
-                logger.warning("Zero units, skipping trade.")
+                logger.warning("Zero units, skipping trade execution.")
                 return False
 
             order = await self.client.create_market_order(signal, units, CONFIG.INSTRUMENT)
@@ -49,13 +47,14 @@ class TradeExecutor:
     async def monitor_trades(self):
         closed = []
         try:
-            for trade_id in list(self.state.get("open_trades", {})):
-                trade_info = self.state["open_trades"][trade_id]
+            open_trades = self.state.get("open_trades", {})
+            for trade_id in list(open_trades.keys()):
+                trade_info = open_trades[trade_id]
                 if await self.trade_closer.should_close_trade(trade_id, trade_info):
                     resp = await self.client.close_trade(trade_id)
                     tx = resp.get("orderFillTransaction")
                     if tx:
-                        del self.state["open_trades"][trade_id]
+                        del open_trades[trade_id]
                         closed.append(trade_id)
                         logger.info(f"Closed trade {trade_id}")
         except Exception as e:
