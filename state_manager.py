@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class StateManager:
     def __init__(self, filepath="trade_state.json"):
         self.filepath = filepath

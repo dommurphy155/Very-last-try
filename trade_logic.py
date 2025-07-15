@@ -4,6 +4,7 @@ from utils import calculate_rsi, calculate_macd
 
 logger = logging.getLogger(__name__)
 
+
 class TradeLogic:
     def __init__(self, state, client):
         self.state = state
@@ -11,8 +12,14 @@ class TradeLogic:
 
     async def generate_signal(self):
         try:
-            raw_candles = await self.client.get_candles(CONFIG.INSTRUMENT, CONFIG.CANDLE_GRANULARITY, CONFIG.CANDLE_COUNT)
-            candles = raw_candles.get("candles") if isinstance(raw_candles, dict) else raw_candles
+            raw_candles = await self.client.get_candles(
+                CONFIG.INSTRUMENT, CONFIG.CANDLE_GRANULARITY, CONFIG.CANDLE_COUNT
+            )
+            candles = (
+                raw_candles.get("candles")
+                if isinstance(raw_candles, dict)
+                else raw_candles
+            )
             if not candles or len(candles) < 30:
                 logger.warning("Insufficient candle data for signal generation.")
                 return None

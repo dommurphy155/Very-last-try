@@ -1,14 +1,10 @@
 import logging
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    ContextTypes,
-    Application,
-)
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Application
 from trading_bot import TradingBot
 
 logger = logging.getLogger(__name__)
+
 
 class TelegramBot:
     def __init__(self, token, chat_id, trading_bot: TradingBot):
@@ -28,8 +24,10 @@ class TelegramBot:
         if not chat or not chat.id:
             logger.warning("No chat or chat.id found in /start command")
             return
-        await context.bot.send_message(chat_id=chat.id,
-                                       text="🤖 AI Forex Bot started. Use /status to check bot status.")
+        await context.bot.send_message(
+            chat_id=chat.id,
+            text="🤖 AI Forex Bot started. Use /status to check bot status.",
+        )
 
     async def status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat = update.effective_chat
@@ -38,9 +36,13 @@ class TelegramBot:
             return
         open_trades = self.trading_bot.state.get("open_trades", {})
         if not isinstance(open_trades, dict):
-            logger.warning(f"Invalid open_trades type in status: {type(open_trades)}. Resetting.")
+            logger.warning(
+                f"Invalid open_trades type in status: {type(open_trades)}. Resetting."
+            )
             open_trades = {}
-        msg = f"Bot running: {self.trading_bot.running}\nOpen trades: {len(open_trades)}"
+        msg = (
+            f"Bot running: {self.trading_bot.running}\nOpen trades: {len(open_trades)}"
+        )
         await context.bot.send_message(chat_id=chat.id, text=msg)
 
     async def make_trade(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -69,7 +71,9 @@ class TelegramBot:
             return
         open_trades = self.trading_bot.state.get("open_trades", {})
         if not isinstance(open_trades, dict):
-            logger.warning(f"Invalid open_trades type in close_all: {type(open_trades)}. Resetting.")
+            logger.warning(
+                f"Invalid open_trades type in close_all: {type(open_trades)}. Resetting."
+            )
             open_trades = {}
         trades = list(open_trades.keys())
         for trade_id in trades:

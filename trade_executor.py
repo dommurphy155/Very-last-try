@@ -5,6 +5,7 @@ from trade_closer import TradeCloser
 
 logger = logging.getLogger(__name__)
 
+
 class TradeExecutor:
     def __init__(self, state, client):
         self.state = state
@@ -22,7 +23,9 @@ class TradeExecutor:
                 logger.warning("Zero units, skipping trade execution.")
                 return False
 
-            order = await self.client.create_market_order(signal, units, CONFIG.INSTRUMENT)
+            order = await self.client.create_market_order(
+                signal, units, CONFIG.INSTRUMENT
+            )
             tx = order.get("orderFillTransaction")
             if tx:
                 trade_id = tx["tradeID"]
@@ -34,7 +37,9 @@ class TradeExecutor:
                     "entry_price": price,
                     "instrument": CONFIG.INSTRUMENT,
                 }
-                self.cooldown_until = datetime.utcnow() + timedelta(seconds=CONFIG.COOLDOWN_SECONDS)
+                self.cooldown_until = datetime.utcnow() + timedelta(
+                    seconds=CONFIG.COOLDOWN_SECONDS
+                )
                 logger.info(f"Executed {signal} trade with ID {trade_id} at {price}")
                 return True
             else:

@@ -4,6 +4,7 @@ from config import CONFIG
 
 logger = logging.getLogger(__name__)
 
+
 class PositionSizer:
     def __init__(self, state, account_balance=10000):
         self.state = state
@@ -20,9 +21,13 @@ class PositionSizer:
 
     async def calculate_units(self, instrument, risk_percent=1.0):
         try:
-            candles = await client.get_candles(instrument, CONFIG.CANDLE_GRANULARITY, 50)
+            candles = await client.get_candles(
+                instrument, CONFIG.CANDLE_GRANULARITY, 50
+            )
             if not candles:
-                logger.warning("No candle data for ATR calculation. Using default units.")
+                logger.warning(
+                    "No candle data for ATR calculation. Using default units."
+                )
                 return CONFIG.DEFAULT_UNITS
 
             atr = calculate_atr(candles, period=14)
@@ -37,7 +42,9 @@ class PositionSizer:
                 units = 1000
                 logger.debug("Adjusted units to minimum 1000")
 
-            logger.info(f"PositionSizer calculated units: {units} for risk_percent: {risk_percent} and ATR: {atr}")
+            logger.info(
+                f"PositionSizer calculated units: {units} for risk_percent: {risk_percent} and ATR: {atr}"
+            )
             return units
 
         except Exception as e:

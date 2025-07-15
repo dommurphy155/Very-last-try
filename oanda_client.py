@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class OandaClient:
     BASE_URL = "https://api-fxpractice.oanda.com/v3"
 
@@ -13,7 +14,7 @@ class OandaClient:
         self.session = None
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
     async def init_session(self):
@@ -46,11 +47,7 @@ class OandaClient:
 
     async def get_candles(self, instrument, granularity="M1", count=100):
         endpoint = f"/instruments/{instrument}/candles"
-        params = {
-            "granularity": granularity,
-            "count": count,
-            "price": "M"
-        }
+        params = {"granularity": granularity, "count": count, "price": "M"}
         return await self._request("GET", endpoint, params=params)
 
     async def get_prices(self, instruments):
@@ -65,7 +62,7 @@ class OandaClient:
                 "instrument": instrument,
                 "units": str(units if side == "BUY" else -units),
                 "type": "MARKET",
-                "positionFill": "DEFAULT"
+                "positionFill": "DEFAULT",
             }
         }
         return await self._request("POST", endpoint, json=order_data)

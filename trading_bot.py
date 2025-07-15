@@ -4,6 +4,7 @@ from trade_executor import TradeExecutor
 
 logger = logging.getLogger(__name__)
 
+
 class TradingBot:
     def __init__(self, state, client):
         self.state = state

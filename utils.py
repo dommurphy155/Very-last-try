@@ -80,4 +80,3 @@ def calculate_macd(candles, fast=12, slow=26, signal=9):
     except Exception as e:
         logger.error(f"Failed to calculate MACD: {e}")
         return [0] * len(candles), [0] * len(candles)
-        

@@ -7,12 +7,14 @@ from state_manager import StateManager
 from trading_bot import TradingBot
 from telegram_interface import TelegramBot
 
+
 def setup_logging():
     logging.basicConfig(
         level=getattr(logging, CONFIG.LOGGING_LEVEL),
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)]
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
+
 
 async def main():
     setup_logging()
@@ -23,7 +25,9 @@ async def main():
     await client.init_session()
 
     trading_bot = TradingBot(state, client)
-    telegram_bot = TelegramBot(CONFIG.TELEGRAM_BOT_TOKEN, CONFIG.TELEGRAM_CHAT_ID, trading_bot)
+    telegram_bot = TelegramBot(
+        CONFIG.TELEGRAM_BOT_TOKEN, CONFIG.TELEGRAM_CHAT_ID, trading_bot
+    )
 
     await trading_bot.start()
     telegram_task = asyncio.create_task(telegram_bot.run())
@@ -43,6 +47,7 @@ async def main():
             pass
     finally:
         await client.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
