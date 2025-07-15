@@ -51,7 +51,6 @@ TELEGRAM_CHAT_ID=your_chat_id_here
 - Python 3.10.18+
 - httpx>=0.24.0
 - python-telegram-bot==20.3
-- pandas>=1.5.0
 - numpy>=1.21.0
 - asyncio-throttle>=1.0.0
 - python-dateutil>=2.8.0
