@@ -30,7 +30,8 @@ class InstrumentSelector:
 
         best = max(volatilities, key=volatilities.get)
         logger.info(
-            f"Selected instrument {best} with volatility {volatilities[best]:.5f}"
+            f"Selected instrument {best} with volatility
+    {volatilities[best]:.5f}"
         )
         return best
 

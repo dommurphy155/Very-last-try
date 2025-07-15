@@ -31,7 +31,6 @@ class TradingBot:
             if success:
                 logger.info(f"✅ Trade executed: {signal}")
         else:
-            logger.debug("No valid trade signal.")
 
         closed_trades = await self.trade_executor.monitor_trades()
         if closed_trades:

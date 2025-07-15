@@ -18,7 +18,8 @@ def calculate_atr(candles, period=14):
             )
             trs.append(tr)
 
-        atr = sum(trs[-period:]) / period if len(trs) >= period else sum(trs) / len(trs)
+        atr = sum(trs[-period:]) / period if len(trs) >= period else sum(trs)
+    / len(trs)
         return atr
     except Exception as e:
         logger.error(f"Failed to calculate ATR: {e}")

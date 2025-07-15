@@ -32,7 +32,8 @@ class PositionSizer:
 
             atr = calculate_atr(candles, period=14)
             if atr == 0:
-                logger.warning("ATR calculated as zero, adjusting to minimum risk.")
+                logger.warning("ATR calculated as zero, adjusting to minimum
+    risk.")
                 atr = 0.0005
 
             risk_amount = (risk_percent / 100) * self.account_balance
@@ -43,7 +44,8 @@ class PositionSizer:
                 logger.debug("Adjusted units to minimum 1000")
 
             logger.info(
-                f"PositionSizer calculated units: {units} for risk_percent: {risk_percent} and ATR: {atr}"
+                f"PositionSizer calculated units: {units} for risk_percent:
+    {risk_percent} and ATR: {atr}"
             )
             return units
 

@@ -13,7 +13,8 @@ class TradeLogic:
     async def generate_signal(self):
         try:
             raw_candles = await self.client.get_candles(
-                CONFIG.INSTRUMENT, CONFIG.CANDLE_GRANULARITY, CONFIG.CANDLE_COUNT
+                CONFIG.INSTRUMENT, CONFIG.CANDLE_GRANULARITY,
+    CONFIG.CANDLE_COUNT
             )
             candles = (
                 raw_candles.get("candles")
@@ -21,7 +22,8 @@ class TradeLogic:
                 else raw_candles
             )
             if not candles or len(candles) < 30:
-                logger.warning("Insufficient candle data for signal generation.")
+                logger.warning("Insufficient candle data for signal
+    generation.")
                 return None
 
             closes = [float(c["mid"]["c"]) for c in candles if c.get("mid")]
@@ -35,7 +37,8 @@ class TradeLogic:
             if rsi[-1] < CONFIG.RSI_OVERSOLD and macd[-1] > signal_line[-1]:
                 logger.info("✅ Buy signal generated.")
                 return "BUY"
-            elif rsi[-1] > CONFIG.RSI_OVERBOUGHT and macd[-1] < signal_line[-1]:
+            elif rsi[-1] > CONFIG.RSI_OVERBOUGHT and macd[-1] <
+    signal_line[-1]:
                 logger.info("✅ Sell signal generated.")
                 return "SELL"
             return None

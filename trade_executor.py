@@ -40,7 +40,8 @@ class TradeExecutor:
                 self.cooldown_until = datetime.utcnow() + timedelta(
                     seconds=CONFIG.COOLDOWN_SECONDS
                 )
-                logger.info(f"Executed {signal} trade with ID {trade_id} at {price}")
+                logger.info(f"Executed {signal} trade with ID {trade_id} at
+    {price}")
                 return True
             else:
                 logger.warning(f"Trade order failed: {order}")
@@ -55,7 +56,8 @@ class TradeExecutor:
             open_trades = self.state.get("open_trades", {})
             for trade_id in list(open_trades.keys()):
                 trade_info = open_trades[trade_id]
-                if await self.trade_closer.should_close_trade(trade_id, trade_info):
+                if await self.trade_closer.should_close_trade(trade_id,
+    trade_info):
                     resp = await self.client.close_trade(trade_id)
                     tx = resp.get("orderFillTransaction")
                     if tx:
