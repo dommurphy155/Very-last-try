@@ -29,10 +29,7 @@ class InstrumentSelector:
                 volatilities[instrument] = 0
 
         best = max(volatilities, key=volatilities.get)
-        logger.info(
-            f"Selected instrument {best} with volatility
-    {volatilities[best]:.5f}"
-        )
+        logger.info(f"Selected instrument {best} with volatility {volatilities[best]:.5f}")
         return best
 
     def calculate_volatility(self, candles):
@@ -42,3 +39,4 @@ class InstrumentSelector:
         mean = sum(closes) / len(closes)
         variance = sum((x - mean) ** 2 for x in closes) / (len(closes) - 1)
         return variance ** 0.5
+ 

@@ -2,7 +2,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 def calculate_atr(candles, period=14):
     try:
         highs = [float(c["high"]) for c in candles]
@@ -18,8 +17,7 @@ def calculate_atr(candles, period=14):
             )
             trs.append(tr)
 
-        atr = sum(trs[-period:]) / period if len(trs) >= period else sum(trs)
-    / len(trs)
+        atr = sum(trs[-period:]) / period if len(trs) >= period else sum(trs) / len(trs)
         return atr
     except Exception as e:
         logger.error(f"Failed to calculate ATR: {e}")
@@ -50,7 +48,6 @@ def calculate_rsi(candles, period=14):
             rsi = 100 - (100 / (1 + rs)) if avg_loss != 0 else 100
             rsi_values.append(round(rsi, 2))
 
-        # Pad beginning with neutral values
         return [50] * (len(closes) - len(rsi_values)) + rsi_values
     except Exception as e:
         logger.error(f"Failed to calculate RSI: {e}")
@@ -81,3 +78,4 @@ def calculate_macd(candles, fast=12, slow=26, signal=9):
     except Exception as e:
         logger.error(f"Failed to calculate MACD: {e}")
         return [0] * len(candles), [0] * len(candles)
+ 

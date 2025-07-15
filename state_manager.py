@@ -35,3 +35,4 @@ class StateManager:
     def set(self, key, value):
         self.state[key] = value
         self.save_state()
+ 

@@ -18,3 +18,4 @@ class CONFIG:
     RSI_OVERBOUGHT = 70
 
     LOGGING_LEVEL = "INFO"
+ 
