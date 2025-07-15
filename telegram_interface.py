@@ -1,6 +1,11 @@
 import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    Application,
+)
 from trading_bot import TradingBot
 
 logger = logging.getLogger(__name__)
@@ -10,7 +15,7 @@ class TelegramBot:
         self.token = token
         self.chat_id = chat_id
         self.trading_bot = trading_bot
-        self.app = ApplicationBuilder().token(self.token).build()
+        self.app: Application = ApplicationBuilder().token(self.token).build()
 
         self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("status", self.status))
@@ -45,5 +50,20 @@ class TelegramBot:
             self.trading_bot.state["open_trades"].pop(trade_id, None)
         await context.bot.send_message(chat_id=update.effective_chat.id, text="All trades closed.")
 
-    def run(self):
-        self.app.run_polling()
+    async def start_polling(self):
+        try:
+            await self.app.initialize()
+            await self.app.start()
+            await self.app.updater.start_polling()
+            logger.info("✅ Telegram bot polling started")
+        except Exception as e:
+            logger.error(f"❌ Telegram bot polling failed: {e}")
+
+    async def stop_polling(self):
+        try:
+            await self.app.updater.stop()
+            await self.app.stop()
+            await self.app.shutdown()
+            logger.info("✅ Telegram bot stopped cleanly")
+        except Exception as e:
+            logger.error(f"❌ Error stopping Telegram bot: {e}")

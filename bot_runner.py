@@ -5,7 +5,7 @@ from config import CONFIG
 from oanda_client import OandaClient
 from state_manager import StateManager
 from trading_bot import TradingBot
-from telegram_bot import TelegramBot
+from telegram_interface import TelegramBot
 
 def setup_logging():
     logging.basicConfig(
@@ -26,7 +26,7 @@ async def main():
     telegram_bot = TelegramBot(CONFIG.TELEGRAM_BOT_TOKEN, CONFIG.TELEGRAM_CHAT_ID, trading_bot)
 
     await trading_bot.start()
-    telegram_task = asyncio.create_task(asyncio.to_thread(telegram_bot.run))
+    await telegram_bot.start_polling()
 
     try:
         while trading_bot.running:
@@ -36,6 +36,7 @@ async def main():
     except KeyboardInterrupt:
         logging.info("Keyboard interrupt received, stopping bot.")
         await trading_bot.stop()
+        await telegram_bot.stop_polling()
     finally:
         await client.close()
 
