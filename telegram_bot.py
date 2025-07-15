@@ -12,32 +12,38 @@ class TelegramBot:
         self.state = state
         self.trade_executor = trade_executor
         self.app = None
+        self._polling_task = None
 
     async def start(self):
         self.app = ApplicationBuilder().token(self.token).build()
         self.app.add_handler(CommandHandler("status", self.status))
         self.app.add_handler(CommandHandler("maketrade", self.maketrade))
         self.app.add_handler(CommandHandler("whatyoudoin", self.whatyoudoin))
-        logger.info("✅ Telegram bot initialized.")
 
-    async def run(self):
-        if not self.app:
-            await self.start()
-        logger.info("▶️ Telegram bot polling started.")
-        try:
-            await self.app.run_polling()
-        except Exception as e:
-            logger.error(f"Telegram bot polling error: {e}")
+        # Properly initialize the application (must await)
+        await self.app.initialize()
+
+        # Start polling as a background task and keep reference
+        self._polling_task = asyncio.create_task(self.app.run_polling())
+        logger.info("✅ Telegram bot running.")
 
     async def stop(self):
         if self.app:
+            # Shutdown and stop must be awaited in order
             await self.app.shutdown()
             await self.app.stop()
             logger.info("🛑 Telegram bot stopped.")
 
+            # Cancel polling task if still running
+            if self._polling_task and not self._polling_task.done():
+                self._polling_task.cancel()
+                try:
+                    await self._polling_task
+                except asyncio.CancelledError:
+                    pass
+
     async def send_message(self, text):
         if not self.app:
-            logger.warning("Telegram app not started yet.")
             return
         try:
             await self.app.bot.send_message(chat_id=self.chat_id, text=text)
