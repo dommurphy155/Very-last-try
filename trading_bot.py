@@ -1,3 +1,5 @@
+# trading_bot.py
+
 import logging
 from trade_logic import TradeLogic
 from trade_executor import TradeExecutor
