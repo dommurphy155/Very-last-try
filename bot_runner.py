@@ -1,5 +1,3 @@
-# bot_runner.py
-
 import asyncio
 import logging
 import signal
@@ -27,16 +25,21 @@ class BotRunner:
         await self.telegram_bot.start()
         await self.trading_bot.start()
 
-        while self.running:
-            try:
-                await self.trading_bot.trade_cycle()
-                self.state_manager.save_state(self.state)
-                await asyncio.sleep(CONFIG.SCAN_INTERVAL)
-            except Exception as e:
-                logger.exception(f"Main loop error: {e}")
-                await self.telegram_bot.send_message(f"⚠️ Error: {e}")
+        # Run telegram polling in background task
+        telegram_task = asyncio.create_task(self.telegram_bot.run())
 
-        await self.shutdown()
+        try:
+            while self.running:
+                try:
+                    await self.trading_bot.trade_cycle()
+                    self.state_manager.save_state(self.state)
+                    await asyncio.sleep(CONFIG.SCAN_INTERVAL)
+                except Exception as e:
+                    logger.exception(f"Error in trade cycle: {e}")
+                    await self.telegram_bot.send_message(f"⚠️ Error in trade cycle: {e}")
+        finally:
+            telegram_task.cancel()
+            await self.shutdown()
 
     async def shutdown(self):
         if not self.running:
@@ -49,8 +52,8 @@ class BotRunner:
         logger.info("✅ Bot shutdown complete.")
 
     def start(self):
-        self.loop.add_signal_handler(signal.SIGINT, lambda: asyncio.create_task(self.shutdown()))
-        self.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.shutdown()))
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            self.loop.add_signal_handler(sig, lambda: asyncio.create_task(self.shutdown()))
         self.loop.run_until_complete(self.run())
 
 def main():

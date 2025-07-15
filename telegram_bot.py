@@ -1,5 +1,3 @@
-# telegram_bot.py
-
 import asyncio
 import logging
 from telegram import Update, Bot
@@ -20,8 +18,16 @@ class TelegramBot:
         self.app.add_handler(CommandHandler("status", self.status))
         self.app.add_handler(CommandHandler("maketrade", self.maketrade))
         self.app.add_handler(CommandHandler("whatyoudoin", self.whatyoudoin))
-        asyncio.create_task(self.app.run_polling())
-        logger.info("✅ Telegram bot running.")
+        logger.info("✅ Telegram bot initialized.")
+
+    async def run(self):
+        if not self.app:
+            await self.start()
+        logger.info("▶️ Telegram bot polling started.")
+        try:
+            await self.app.run_polling()
+        except Exception as e:
+            logger.error(f"Telegram bot polling error: {e}")
 
     async def stop(self):
         if self.app:
@@ -31,6 +37,7 @@ class TelegramBot:
 
     async def send_message(self, text):
         if not self.app:
+            logger.warning("Telegram app not started yet.")
             return
         try:
             await self.app.bot.send_message(chat_id=self.chat_id, text=text)
