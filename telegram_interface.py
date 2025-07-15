@@ -24,29 +24,49 @@ class TelegramBot:
         self.app.add_handler(CommandHandler("closeall", self.close_all))
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await context.bot.send_message(chat_id=update.effective_chat.id,
+        chat = update.effective_chat
+        if not chat or not chat.id:
+            logger.warning("No chat or chat.id found in /start command")
+            return
+        await context.bot.send_message(chat_id=chat.id,
                                        text="🤖 AI Forex Bot started. Use /status to check bot status.")
 
     async def status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        chat = update.effective_chat
+        if not chat or not chat.id:
+            logger.warning("No chat or chat.id found in /status command")
+            return
         open_trades = self.trading_bot.state.get("open_trades", {})
         if not isinstance(open_trades, dict):
             logger.warning(f"Invalid open_trades type in status: {type(open_trades)}. Resetting.")
             open_trades = {}
         msg = f"Bot running: {self.trading_bot.running}\nOpen trades: {len(open_trades)}"
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        await context.bot.send_message(chat_id=chat.id, text=msg)
 
     async def make_trade(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        chat = update.effective_chat
+        if not chat or not chat.id:
+            logger.warning("No chat or chat.id found in /maketrade command")
+            return
         if not self.trading_bot.running:
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="Bot is not running.")
+            await context.bot.send_message(chat_id=chat.id, text="Bot is not running.")
             return
         await self.trading_bot.trade_cycle()
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Trade cycle executed.")
+        await context.bot.send_message(chat_id=chat.id, text="Trade cycle executed.")
 
     async def stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        chat = update.effective_chat
+        if not chat or not chat.id:
+            logger.warning("No chat or chat.id found in /stop command")
+            return
         await self.trading_bot.stop()
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Bot stopped.")
+        await context.bot.send_message(chat_id=chat.id, text="Bot stopped.")
 
     async def close_all(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        chat = update.effective_chat
+        if not chat or not chat.id:
+            logger.warning("No chat or chat.id found in /closeall command")
+            return
         open_trades = self.trading_bot.state.get("open_trades", {})
         if not isinstance(open_trades, dict):
             logger.warning(f"Invalid open_trades type in close_all: {type(open_trades)}. Resetting.")
@@ -58,7 +78,7 @@ class TelegramBot:
                 self.trading_bot.state["open_trades"].pop(trade_id, None)
             except Exception as e:
                 logger.error(f"Error closing trade {trade_id}: {e}")
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="All trades closed.")
+        await context.bot.send_message(chat_id=chat.id, text="All trades closed.")
 
     async def run(self):
         try:
