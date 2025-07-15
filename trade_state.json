@@ -1,0 +1,32 @@
+{
+    "last_trade_time": {
+        "EUR_USD": "2025-07-14T22:19:29.444173",
+        "GBP_USD": "2025-07-14T22:19:29.853655",
+        "USD_JPY": "2025-07-14T22:19:30.271233",
+        "AUD_USD": "2025-07-14T22:19:30.689545",
+        "USD_CHF": "2025-07-14T22:19:31.091280"
+    },
+    "open_trades": 54,
+    "daily_stats": {
+        "date": "2025-07-15",
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "pnl": 0.0,
+        "max_loss": 0.0
+    },
+    "peak_equity": 98337.5838,
+    "performance": {
+        "EUR_USD": {
+            "wins": 0,
+            "losses": 0,
+            "confidence": 0.7
+        }
+    },
+    "risk_metrics": {
+        "current_drawdown": 0.0,
+        "daily_loss": 0.0,
+        "consecutive_losses": 0,
+        "max_consecutive_losses": 0
+    }
+}

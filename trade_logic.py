@@ -6,6 +6,7 @@ from utils import get_candle_data, analyze_trend, detect_reversal_patterns
 
 logger = logging.getLogger(__name__)
 
+
 class TradeLogic:
     def __init__(self, state, client):
         self.state = state
