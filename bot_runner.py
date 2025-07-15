@@ -26,7 +26,7 @@ async def main():
     telegram_bot = TelegramBot(CONFIG.TELEGRAM_BOT_TOKEN, CONFIG.TELEGRAM_CHAT_ID, trading_bot)
 
     await trading_bot.start()
-    await telegram_bot.start_polling()
+    telegram_task = asyncio.create_task(telegram_bot.run())
 
     try:
         while trading_bot.running:
@@ -36,7 +36,11 @@ async def main():
     except KeyboardInterrupt:
         logging.info("Keyboard interrupt received, stopping bot.")
         await trading_bot.stop()
-        await telegram_bot.stop_polling()
+        telegram_task.cancel()
+        try:
+            await telegram_task
+        except asyncio.CancelledError:
+            pass
     finally:
         await client.close()
 
