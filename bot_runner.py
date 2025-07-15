@@ -1,8 +1,9 @@
 import asyncio
 import logging
 import signal
+
 from trading_bot import TradingBot
-from telegram_bot import TelegramBot
+from telegram_interface import TelegramBot
 from state_manager import StateManager
 from oanda_client import OandaClient
 from config import CONFIG
