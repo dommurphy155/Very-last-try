@@ -1,5 +1,3 @@
-# oanda_client.py
-
 import aiohttp
 import logging
 
@@ -46,7 +44,7 @@ class OandaClient:
             logger.error(f"OANDA request error: {e}")
             raise
 
-    async def get_candles(self, instrument, granularity="M5", count=50):
+    async def get_candles(self, instrument, granularity="M1", count=100):
         endpoint = f"/instruments/{instrument}/candles"
         params = {"granularity": granularity, "count": count, "price": "M"}
         return await self._request("GET", endpoint, params=params)

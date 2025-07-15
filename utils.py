@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def calculate_atr(candles, period=14):
     try:
         highs = [float(c["high"]) for c in candles]

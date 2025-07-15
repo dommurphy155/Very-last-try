@@ -5,7 +5,6 @@ from trading_bot import TradingBot
 
 logger = logging.getLogger(__name__)
 
-
 class TelegramBot:
     def __init__(self, token, chat_id, trading_bot: TradingBot):
         self.token = token
@@ -38,7 +37,9 @@ class TelegramBot:
         if not isinstance(open_trades, dict):
             logger.warning(f"Invalid open_trades type in status: {type(open_trades)}. Resetting.")
             open_trades = {}
-        msg = f"Bot running: {self.trading_bot.running}\nOpen trades: {len(open_trades)}"
+        msg = (
+            f"Bot running: {self.trading_bot.running}\nOpen trades: {len(open_trades)}"
+        )
         await context.bot.send_message(chat_id=chat.id, text=msg)
 
     async def make_trade(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
