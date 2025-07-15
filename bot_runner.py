@@ -1,3 +1,5 @@
+# bot_runner.py
+
 import asyncio
 import logging
 import signal
@@ -26,9 +28,6 @@ class BotRunner:
         await self.telegram_bot.start()
         await self.trading_bot.start()
 
-        # Run telegram polling in background task
-        telegram_task = asyncio.create_task(self.telegram_bot.run())
-
         try:
             while self.running:
                 try:
@@ -39,7 +38,6 @@ class BotRunner:
                     logger.exception(f"Error in trade cycle: {e}")
                     await self.telegram_bot.send_message(f"⚠️ Error in trade cycle: {e}")
         finally:
-            telegram_task.cancel()
             await self.shutdown()
 
     async def shutdown(self):
