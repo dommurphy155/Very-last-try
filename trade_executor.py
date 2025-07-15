@@ -5,6 +5,7 @@ from trade_closer import TradeCloser
 
 logger = logging.getLogger(__name__)
 
+
 class TradeExecutor:
     def __init__(self, state, client):
         self.state = state
@@ -22,7 +23,9 @@ class TradeExecutor:
                 logger.warning("Zero units, skipping trade execution.")
                 return False
 
-            order = await self.client.create_market_order(signal, units, CONFIG.INSTRUMENT)
+            order = await self.client.create_market_order(
+                signal, units, CONFIG.INSTRUMENT
+            )
             tx = order.get("orderFillTransaction")
             if tx:
                 trade_id = tx["tradeID"]
@@ -34,8 +37,11 @@ class TradeExecutor:
                     "entry_price": price,
                     "instrument": CONFIG.INSTRUMENT,
                 }
-                self.cooldown_until = datetime.utcnow() + timedelta(seconds=CONFIG.COOLDOWN_SECONDS)
-                logger.info(f"Executed {signal} trade with ID {trade_id} at {price}")
+                self.cooldown_until = datetime.utcnow() + timedelta(
+                    seconds=CONFIG.COOLDOWN_SECONDS
+                )
+                logger.info(f"Executed {signal} trade with ID {trade_id} at
+    {price}")
                 return True
             else:
                 logger.warning(f"Trade order failed: {order}")
@@ -50,7 +56,8 @@ class TradeExecutor:
             open_trades = self.state.get("open_trades", {})
             for trade_id in list(open_trades.keys()):
                 trade_info = open_trades[trade_id]
-                if await self.trade_closer.should_close_trade(trade_id, trade_info):
+                if await self.trade_closer.should_close_trade(trade_id,
+    trade_info):
                     resp = await self.client.close_trade(trade_id)
                     tx = resp.get("orderFillTransaction")
                     if tx:

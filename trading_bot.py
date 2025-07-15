@@ -4,6 +4,7 @@ from trade_executor import TradeExecutor
 
 logger = logging.getLogger(__name__)
 
+
 class TradingBot:
     def __init__(self, state, client):
         self.state = state
@@ -30,7 +31,6 @@ class TradingBot:
             if success:
                 logger.info(f"✅ Trade executed: {signal}")
         else:
-            logger.debug("No valid trade signal.")
 
         closed_trades = await self.trade_executor.monitor_trades()
         if closed_trades:

@@ -162,4 +162,3 @@ def scan_all_py_files():
 # === MAIN ===
 if __name__ == "__main__":
     os.makedirs(BACKUP_DIR, exist_ok=True)
-    scan_all_py_files()

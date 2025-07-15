@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class StateManager:
     def __init__(self, filepath="trade_state.json"):
         self.filepath = filepath
@@ -25,7 +26,6 @@ class StateManager:
             with self.lock:
                 with open(self.filepath, "w") as f:
                     json.dump(self.state, f, indent=4)
-            logger.debug("State saved to file.")
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
