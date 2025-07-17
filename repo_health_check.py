@@ -24,10 +24,12 @@ def should_skip(path):
         or os.path.getsize(path) > MAX_FILE_SIZE
     )
 
+
 def backup_file(path):
     backup_path = os.path.join(BACKUP_DIR, os.path.relpath(path))
     os.makedirs(os.path.dirname(backup_path), exist_ok=True)
     shutil.copy2(path, backup_path)
+
 
 def fix_line_length(path):
     lines = open(path, encoding="utf-8").readlines()
@@ -48,6 +50,7 @@ def fix_line_length(path):
             f.writelines(fixed)
         print(f"[FIX] Line length fixed in {path}")
 
+
 def fix_whitespace_colon(path):
     original = open(path, encoding="utf-8").read()
     fixed = re.sub(r"\s+:", ":", original)
@@ -55,6 +58,7 @@ def fix_whitespace_colon(path):
         with open(path, "w", encoding="utf-8") as f:
             f.write(fixed)
         print(f"[FIX] Whitespace before colon in {path}")
+
 
 def fix_trailing_whitespace(path):
     lines = open(path, encoding="utf-8").readlines()
@@ -64,6 +68,7 @@ def fix_trailing_whitespace(path):
             f.writelines(fixed)
         print(f"[FIX] Trailing whitespace removed in {path}")
 
+
 def fix_final_newline(path):
     content = open(path, encoding="utf-8").read()
     if not content.endswith("\n") and not DRY_RUN:
@@ -71,12 +76,15 @@ def fix_final_newline(path):
             f.write("\n")
         print(f"[FIX] Added final newline to {path}")
 
+
 def remove_unused_imports(path):
     lines = open(path, encoding="utf-8").readlines()
     new_lines = []
     changed = False
     for line in lines:
-        if line.strip().startswith(("import", "from")) and any(mod in line for mod in UNUSED_IMPORTS_TO_REMOVE):
+        if line.strip().startswith(("import", "from")) and any(
+            mod in line for mod in UNUSED_IMPORTS_TO_REMOVE
+        ):
             print(f"[FIX] Removed unused import in {path}: {line.strip()}")
             changed = True
             continue
@@ -84,6 +92,7 @@ def remove_unused_imports(path):
     if changed and not DRY_RUN:
         with open(path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
+
 
 def remove_debug_statements(path):
     lines = open(path, encoding="utf-8").readlines()
@@ -99,12 +108,14 @@ def remove_debug_statements(path):
         with open(path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
 
+
 def detect_conflict_markers(path):
     content = open(path, encoding="utf-8").read()
     if any(marker in content for marker in ["<<<<<<<", "=======", ">>>>>>>"]):
         print(f"[ERROR] Merge conflict marker in {path}")
         return True
     return False
+
 
 def detect_syntax_errors(path):
     try:
@@ -115,6 +126,7 @@ def detect_syntax_errors(path):
         print(f"[ERROR] Syntax error in {path}: {e}")
         return True
 
+
 def run_command(cmd, name):
     try:
         print(f"[RUN] {' '.join(cmd)}")
@@ -123,6 +135,7 @@ def run_command(cmd, name):
         print(f"[WARN] {name} not installed, skipping.")
     except subprocess.CalledProcessError as e:
         print(f"[FAIL] {name} failed: {e}")
+
 
 # === MAIN SCAN ===
 def scan_all_py_files():
@@ -158,6 +171,7 @@ def scan_all_py_files():
     run_command(["flake8", "."], "flake8")
     run_command(["mypy", "."], "mypy")
     run_command(["bandit", "-r", "."], "bandit")
+
 
 # === MAIN ===
 if __name__ == "__main__":

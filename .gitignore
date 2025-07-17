@@ -1,0 +1,13 @@
+# Python virtual environments
+venv/
+venv310/
+.venv/
+__pycache__/
+.mypy_cache/
+*.log
+*.pyc
+*.pyo
+bot_state.json
+trade_state.json
+trading_bot.log
+bot_error.log
